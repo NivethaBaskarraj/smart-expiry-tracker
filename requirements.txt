@@ -1,0 +1,126 @@
+# Smart Expiry Tracker — Requirements
+
+> Note: This is a Node.js/React project, so there is no Python-style `requirements.txt`.
+> All dependencies are managed through `package.json` files (root, `server/`, `client/`)
+> and installed via `npm install`. This document lists everything needed to build,
+> run, and understand the scope of the project.
+
+---
+
+## 1. System Requirements
+
+| Requirement | Version / Notes |
+|---|---|
+| Node.js | v18.x or later |
+| npm | v9.x or later (bundled with Node.js) |
+| MongoDB | Atlas free tier (cloud) or local MongoDB Community Server v6+ |
+| OS | Windows, macOS, or Linux |
+| Browser | Any modern browser (Chrome, Edge, Firefox) — required for the Notifications API |
+| Code editor | VS Code (recommended) |
+
+---
+
+## 2. External Service Requirements
+
+| Service | Purpose | Free tier available? |
+|---|---|---|
+| MongoDB Atlas | Cloud database hosting | Yes (M0 cluster) |
+| Spoonacular API | Recipe suggestions | Yes (150 requests/day) |
+| Gmail (SMTP via Nodemailer) | Sending expiry alert emails | Yes (personal Gmail + App Password) |
+
+---
+
+## 3. Backend Dependencies (`server/package.json`)
+
+| Package | Purpose |
+|---|---|
+| express | Web server / REST API framework |
+| mongoose | MongoDB object modeling (schemas for User, Item) |
+| bcryptjs | Password hashing |
+| jsonwebtoken | JWT creation & verification for auth |
+| cors | Cross-origin requests from the React app |
+| dotenv | Loads `.env` environment variables |
+| axios | Server-side HTTP requests (Spoonacular API calls) |
+| node-cron | Scheduled daily expiry-check job |
+| nodemailer | Sending email alerts via Gmail SMTP |
+| nodemon *(dev)* | Auto-restarts the server on file changes |
+
+Install with:
+```bash
+cd server
+npm install
+```
+
+---
+
+## 4. Frontend Dependencies (`client/package.json`)
+
+| Package | Purpose |
+|---|---|
+| react / react-dom | UI library |
+| react-router-dom | Client-side routing (Login, Register, Home) |
+| axios | HTTP requests to the backend API |
+| react-scripts | Create React App build tooling |
+
+Install with:
+```bash
+cd client
+npm install
+```
+
+---
+
+## 5. Root Dependencies (`package.json`)
+
+| Package | Purpose |
+|---|---|
+| concurrently *(dev)* | Runs the backend and frontend together with one `npm run dev` command |
+
+Install with:
+```bash
+npm install
+```
+
+---
+
+## 6. Environment Variables Required
+
+All set in `server/.env` (copy from `server/.env.example`):
+
+- `MONGO_URI` — MongoDB connection string
+- `JWT_SECRET` — random string used to sign auth tokens
+- `PORT` — backend server port (default `5000`)
+- `SPOONACULAR_API_KEY` — recipe API key
+- `EMAIL_USER` / `EMAIL_PASS` — Gmail address and App Password for sending alerts
+- `CLIENT_URL` — frontend URL, for CORS (default `http://localhost:3000`)
+
+And in `client/.env` (copy from `client/.env.example`):
+
+- `REACT_APP_API_URL` — backend API base URL (default `http://localhost:5000/api`)
+
+---
+
+## 7. Functional Requirements
+
+1. Users must be able to register and log in; sessions are secured with JWT.
+2. Authenticated users can add a grocery item with name, category, quantity, and
+   expiry date.
+3. Items must display their current status: active, expiring soon (≤2 days), expired,
+   or used.
+4. Users can mark an item as "used" or permanently delete it at any time.
+5. Items remain visible in the log until the user deletes them, regardless of status.
+6. For active items, the system must fetch and display recipe suggestions relevant to
+   that ingredient.
+7. For expired items, the system must display category-based and item-specific
+   disposal/reuse suggestions.
+8. The system must send a browser (desktop) notification when an item is expiring soon.
+9. The system must send an email alert once daily for items expiring soon or already
+   expired.
+
+## 8. Non-Functional Requirements
+
+1. Passwords must never be stored in plain text (hashed with bcrypt).
+2. API routes that access or modify user data must require a valid JWT.
+3. The app must run entirely on free-tier services for development/testing purposes.
+4. The system should degrade gracefully if the Spoonacular API or email service is
+   unavailable (i.e., not crash the whole app).
