@@ -4,6 +4,10 @@ A full-stack web application that helps reduce household food waste by tracking 
 expiry dates, suggesting recipes for items that need to be used soon, and giving
 eco-friendly disposal/reuse suggestions for items that have expired.
 
+🔗 Live Demo: smart-expiry-tracker-eta.vercel.app 🔧 Backend API: smart-expiry-tracker-ys3t.onrender.com
+
+Note: the backend is hosted on Render's free tier, which spins down after periods of inactivity. The very first request after idle time may take 30-50 seconds to respond while it wakes back up — subsequent requests are fast.
+
 ---
 
 ## ✨ Features
@@ -158,6 +162,14 @@ This starts both the backend (`http://localhost:5000`) and frontend
 | `package.json` fails with `EJSONPARSE` | The file was saved with the wrong text encoding — recreate it directly inside VS Code (not via a browser download) |
 
 ---
+
+## 🔑 Environment Variable Reference
+Variable	Where to get it
+MONGO_URI	MongoDB Atlas → Connect → Drivers → Node.js connection string
+JWT_SECRET	Any random string — generate one with node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SPOONACULAR_API_KEY	spoonacular.com/food-api → sign up → Profile & API Key
+EMAIL_USER / EMAIL_PASS	Your Gmail address + an App Password from myaccount.google.com/apppasswords
+CLIENT_URL	The URL your React app runs on (default http://localhost:3000)
 
 ## 🔭 Possible Future Additions
 
