@@ -1,18 +1,17 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-function getTransporter() {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+function getResendClient() {
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
+// Resend's shared test sender - works without verifying your own domain.
+// Once you verify a domain with Resend, you can swap this for something like
+// "Smart Expiry Tracker <alerts@yourdomain.com>".
+const FROM_ADDRESS = 'Smart Expiry Tracker <onboarding@resend.dev>';
+
 async function sendExpiryEmail({ to, userName, items, type }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email not configured (EMAIL_USER/EMAIL_PASS missing) - skipping email send');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('Email not configured (RESEND_API_KEY missing) - skipping email send');
     return;
   }
 
@@ -41,10 +40,10 @@ async function sendExpiryEmail({ to, userName, items, type }) {
     </div>
   `;
 
-  const transporter = getTransporter();
   try {
-    await transporter.sendMail({
-      from: `"Smart Expiry Tracker" <${process.env.EMAIL_USER}>`,
+    const resend = getResendClient();
+    await resend.emails.send({
+      from: FROM_ADDRESS,
       to,
       subject,
       html,
@@ -56,8 +55,8 @@ async function sendExpiryEmail({ to, userName, items, type }) {
 }
 
 async function sendPasswordResetEmail({ to, userName, resetLink }) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email not configured (EMAIL_USER/EMAIL_PASS missing) - skipping email send');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('Email not configured (RESEND_API_KEY missing) - skipping email send');
     return;
   }
 
@@ -75,10 +74,10 @@ async function sendPasswordResetEmail({ to, userName, resetLink }) {
     </div>
   `;
 
-  const transporter = getTransporter();
   try {
-    await transporter.sendMail({
-      from: `"Smart Expiry Tracker" <${process.env.EMAIL_USER}>`,
+    const resend = getResendClient();
+    await resend.emails.send({
+      from: FROM_ADDRESS,
       to,
       subject: '🔑 Reset your Smart Expiry Tracker password',
       html,
