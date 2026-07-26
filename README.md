@@ -4,7 +4,8 @@ A full-stack web application that helps reduce household food waste by tracking 
 expiry dates, suggesting recipes for items that need to be used soon, and giving
 eco-friendly disposal/reuse suggestions for items that have expired.
 
-🔗 Live Demo: smart-expiry-tracker-eta.vercel.app 🔧 Backend API: smart-expiry-tracker-ys3t.onrender.com
+🔗 Live Demo: smart-expiry-tracker-eta.vercel.app 
+🔧 Backend API: smart-expiry-tracker-ys3t.onrender.com
 
 Note: the backend is hosted on Render's free tier, which spins down after periods of inactivity. The very first request after idle time may take 30-50 seconds to respond while it wakes back up — subsequent requests are fast.
 
