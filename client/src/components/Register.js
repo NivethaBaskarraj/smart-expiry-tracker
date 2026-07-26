@@ -12,7 +12,7 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     const ok = await register(name, email, password);
-    if (ok) navigate('/');
+    if (ok) navigate('/dashboard');
   }
 
   return (

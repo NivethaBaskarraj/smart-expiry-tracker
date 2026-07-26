@@ -11,7 +11,7 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     const ok = await login(email, password);
-    if (ok) navigate('/');
+    if (ok) navigate('/dashboard');
   }
 
   return (
@@ -32,6 +32,9 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <p className="forgot-password-link">
+          <Link to="/forgot-password">Forgot password?</Link>
+        </p>
 
         <button type="submit" disabled={loading}>
           {loading ? 'Logging in...' : 'Log In'}
