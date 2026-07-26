@@ -42,13 +42,17 @@ async function sendExpiryEmail({ to, userName, items, type }) {
 
   try {
     const resend = getResendClient();
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
       subject,
       html,
     });
-    console.log(`Email sent to ${to} (${type})`);
+    if (error) {
+      console.error('Resend rejected the email:', JSON.stringify(error));
+      return;
+    }
+    console.log(`Email sent to ${to} (${type}) - id: ${data?.id}`);
   } catch (err) {
     console.error('Failed to send email:', err.message);
   }
@@ -76,13 +80,17 @@ async function sendPasswordResetEmail({ to, userName, resetLink }) {
 
   try {
     const resend = getResendClient();
-    await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
       subject: '🔑 Reset your Smart Expiry Tracker password',
       html,
     });
-    console.log(`Password reset email sent to ${to}`);
+    if (error) {
+      console.error('Resend rejected the password reset email:', JSON.stringify(error));
+      return;
+    }
+    console.log(`Password reset email sent to ${to} - id: ${data?.id}`);
   } catch (err) {
     console.error('Failed to send password reset email:', err.message);
   }
