@@ -63,6 +63,21 @@ label {
   display: block;
 }
 
+.quantity-row {
+  display: flex;
+  gap: 8px;
+}
+
+.quantity-row input {
+  flex: 2;
+  margin-bottom: 12px;
+}
+
+.quantity-row select {
+  flex: 1;
+  margin-bottom: 12px;
+}
+
 /* Auth pages */
 .auth-page {
   min-height: 100vh;

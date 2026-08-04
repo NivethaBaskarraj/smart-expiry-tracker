@@ -9,7 +9,12 @@ const ItemSchema = new mongoose.Schema(
       enum: ['produce', 'dairy', 'meat_seafood', 'bakery', 'pantry', 'beverage', 'other'],
       default: 'other',
     },
-    quantity: { type: String, default: '1' },
+    quantityValue: { type: Number, default: 1, min: 0 },
+    quantityUnit: {
+      type: String,
+      enum: ['unit', 'g', 'kg', 'ml', 'litre'],
+      default: 'unit',
+    },
     purchaseDate: { type: Date, default: Date.now },
     expiryDate: { type: Date, required: true },
     // active = still in stock & not expired

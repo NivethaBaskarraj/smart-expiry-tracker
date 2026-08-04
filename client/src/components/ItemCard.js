@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../api/axios';
 import RecipeModal from './RecipeModal';
 import DisposalModal from './DisposalModal';
+import EditItemForm from './EditItemForm';
 
 const CATEGORY_LABELS = {
   produce: 'Fruits & Vegetables',
@@ -13,9 +14,18 @@ const CATEGORY_LABELS = {
   other: 'Other',
 };
 
+const UNIT_LABELS = {
+  unit: 'unit(s)',
+  g: 'g',
+  kg: 'kg',
+  ml: 'ml',
+  litre: 'litre',
+};
+
 export default function ItemCard({ item, onChanged }) {
   const [showRecipes, setShowRecipes] = useState(false);
   const [showDisposal, setShowDisposal] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const isExpired = item.daysLeft < 0 && item.status === 'active';
@@ -62,7 +72,9 @@ export default function ItemCard({ item, onChanged }) {
         <span className="category-tag">{CATEGORY_LABELS[item.category]}</span>
       </div>
 
-      <p className="item-meta">Qty: {item.quantity}</p>
+      <p className="item-meta">
+        Qty: {item.quantityValue} {UNIT_LABELS[item.quantityUnit] || item.quantityUnit}
+      </p>
       <p className="item-meta">Expiry: {new Date(item.expiryDate).toDateString()}</p>
       <p className={`item-status ${statusClass}`}>{statusLabel}</p>
 
@@ -74,6 +86,9 @@ export default function ItemCard({ item, onChanged }) {
             </button>
             <button className="btn-small" onClick={() => setShowRecipes(true)}>
               🍳 Recipes
+            </button>
+            <button className="btn-small" onClick={() => setShowEdit(true)} disabled={busy}>
+              ✏️ Edit
             </button>
           </>
         )}
@@ -91,6 +106,13 @@ export default function ItemCard({ item, onChanged }) {
 
       {showRecipes && <RecipeModal item={item} onClose={() => setShowRecipes(false)} />}
       {showDisposal && <DisposalModal item={item} onClose={() => setShowDisposal(false)} />}
+      {showEdit && (
+        <EditItemForm
+          item={item}
+          onItemUpdated={onChanged}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
     </div>
   );
 }

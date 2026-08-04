@@ -11,10 +11,19 @@ const CATEGORIES = [
   { value: 'other', label: 'Other' },
 ];
 
+export const UNITS = [
+  { value: 'unit', label: 'unit(s)' },
+  { value: 'g', label: 'g' },
+  { value: 'kg', label: 'kg' },
+  { value: 'ml', label: 'ml' },
+  { value: 'litre', label: 'litre' },
+];
+
 export default function AddItemForm({ onItemAdded, onClose }) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('produce');
-  const [quantity, setQuantity] = useState('1');
+  const [quantityValue, setQuantityValue] = useState('1');
+  const [quantityUnit, setQuantityUnit] = useState('unit');
   const [expiryDate, setExpiryDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -22,12 +31,26 @@ export default function AddItemForm({ onItemAdded, onClose }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    const numericQuantity = Number(quantityValue);
+    if (quantityValue === '' || Number.isNaN(numericQuantity) || numericQuantity <= 0) {
+      setError('Quantity must be a number greater than 0');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const res = await api.post('/items', { name, category, quantity, expiryDate });
+      const res = await api.post('/items', {
+        name,
+        category,
+        quantityValue: numericQuantity,
+        quantityUnit,
+        expiryDate,
+      });
       onItemAdded(res.data);
       setName('');
-      setQuantity('1');
+      setQuantityValue('1');
+      setQuantityUnit('unit');
       setExpiryDate('');
       onClose();
     } catch (err) {
@@ -56,7 +79,24 @@ export default function AddItemForm({ onItemAdded, onClose }) {
         </select>
 
         <label>Quantity</label>
-        <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g. 1 liter" />
+        <div className="quantity-row">
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={quantityValue}
+            onChange={(e) => setQuantityValue(e.target.value)}
+            required
+            placeholder="e.g. 1"
+          />
+          <select value={quantityUnit} onChange={(e) => setQuantityUnit(e.target.value)}>
+            {UNITS.map((u) => (
+              <option key={u.value} value={u.value}>
+                {u.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <label>Expiry Date</label>
         <input

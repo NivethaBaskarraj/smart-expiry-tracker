@@ -1,20 +1,50 @@
-const { Resend } = require('resend');
+const axios = require('axios');
 
-function getResendClient() {
-  return new Resend(process.env.RESEND_API_KEY);
-}
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-// Resend's shared test sender - works without verifying your own domain.
-// Once you verify a domain with Resend, you can swap this for something like
-// "Smart Expiry Tracker <alerts@yourdomain.com>".
-const FROM_ADDRESS = 'Smart Expiry Tracker <onboarding@resend.dev>';
+// This must be an email address you have verified as a "Sender" in your
+// Brevo account (Settings -> Senders, Domains & Dedicated IPs -> Senders).
+// Once verified, you can send to ANY recipient, unlike Resend's domain-only rule.
+const SENDER = {
+  name: 'Smart Expiry Tracker',
+  email: process.env.BREVO_SENDER_EMAIL,
+};
 
-async function sendExpiryEmail({ to, userName, items, type }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('Email not configured (RESEND_API_KEY missing) - skipping email send');
+async function sendViaBrevo({ to, subject, html }) {
+  if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
+    console.warn(
+      'Email not configured (BREVO_API_KEY or BREVO_SENDER_EMAIL missing) - skipping email send'
+    );
     return;
   }
 
+  try {
+    const response = await axios.post(
+      BREVO_API_URL,
+      {
+        sender: SENDER,
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          'api-key': process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }
+    );
+    console.log(`Email sent to ${to} - messageId: ${response.data?.messageId}`);
+  } catch (err) {
+    console.error(
+      'Failed to send email via Brevo:',
+      err.response?.data ? JSON.stringify(err.response.data) : err.message
+    );
+  }
+}
+
+async function sendExpiryEmail({ to, userName, items, type }) {
   const isExpiring = type === 'expiring';
   const subject = isExpiring
     ? `⏰ ${items.length} item(s) expiring soon - Smart Expiry Tracker`
@@ -40,30 +70,10 @@ async function sendExpiryEmail({ to, userName, items, type }) {
     </div>
   `;
 
-  try {
-    const resend = getResendClient();
-    const { data, error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to,
-      subject,
-      html,
-    });
-    if (error) {
-      console.error('Resend rejected the email:', JSON.stringify(error));
-      return;
-    }
-    console.log(`Email sent to ${to} (${type}) - id: ${data?.id}`);
-  } catch (err) {
-    console.error('Failed to send email:', err.message);
-  }
+  await sendViaBrevo({ to, subject, html });
 }
 
 async function sendPasswordResetEmail({ to, userName, resetLink }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('Email not configured (RESEND_API_KEY missing) - skipping email send');
-    return;
-  }
-
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 500px;">
       <h2>Hi ${userName},</h2>
@@ -78,22 +88,7 @@ async function sendPasswordResetEmail({ to, userName, resetLink }) {
     </div>
   `;
 
-  try {
-    const resend = getResendClient();
-    const { data, error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to,
-      subject: '🔑 Reset your Smart Expiry Tracker password',
-      html,
-    });
-    if (error) {
-      console.error('Resend rejected the password reset email:', JSON.stringify(error));
-      return;
-    }
-    console.log(`Password reset email sent to ${to} - id: ${data?.id}`);
-  } catch (err) {
-    console.error('Failed to send password reset email:', err.message);
-  }
+  await sendViaBrevo({ to, subject: '🔑 Reset your Smart Expiry Tracker password', html });
 }
 
 module.exports = { sendExpiryEmail, sendPasswordResetEmail };
