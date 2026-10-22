@@ -7,6 +7,14 @@ export default function DisposalModal({ item, onClose }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
     if (data) return;
     let cancelled = false;
     async function fetchSuggestions() {
@@ -26,43 +34,68 @@ export default function DisposalModal({ item, onClose }) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [data, item.name, item.category]);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card wide" onClick={(e) => e.stopPropagation()}>
-        <h2>♻️ Best way to dispose of {item.name}</h2>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="modal-card wide"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="disposal-modal-title"
+      >
+        <div className="modal-header">
+          <h2 id="disposal-modal-title">♻️ Smart Disposal & Reuse: {item.name}</h2>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
+            &times;
+          </button>
+        </div>
 
-        {loading && <p>Loading suggestions...</p>}
-        {error && <div className="error-banner">{error}</div>}
+        {loading && (
+          <div className="modal-loading-box">
+            <span className="spinner" aria-hidden="true"></span>
+            <p>Loading eco-friendly disposal suggestions...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+          </div>
+        )}
 
         {data && (
-          <>
-            {data.specificTips.length > 0 && (
-              <>
-                <h4>Specific ideas for {item.name}</h4>
-                <ul>
+          <div className="disposal-content">
+            {data.specificTips && data.specificTips.length > 0 && (
+              <section className="disposal-section">
+                <h4>💡 Smart reuse ideas for {item.name}</h4>
+                <ul className="disposal-tips-list">
                   {data.specificTips.map((tip, i) => (
                     <li key={i}>{tip}</li>
                   ))}
                 </ul>
-              </>
+              </section>
             )}
 
-            <h4>General tips for this category</h4>
-            <ul>
-              {data.generalTips.map((tip, i) => (
-                <li key={i}>{tip}</li>
-              ))}
-            </ul>
+            <section className="disposal-section">
+              <h4>🌿 Category best practices ({data.category})</h4>
+              <ul className="disposal-tips-list">
+                {(data.generalTips || []).map((tip, i) => (
+                  <li key={i}>{tip}</li>
+                ))}
+              </ul>
+            </section>
 
-            <p className="safety-note">⚠️ {data.safetyNote}</p>
-          </>
+            <div className="safety-note" role="note">
+              <strong>⚠️ Safety Note: </strong>
+              {data.safetyNote}
+            </div>
+          </div>
         )}
 
         <div className="modal-actions">
-          <button className="btn-ghost" onClick={onClose}>
+          <button type="button" className="btn-ghost" onClick={onClose}>
             Close
           </button>
         </div>

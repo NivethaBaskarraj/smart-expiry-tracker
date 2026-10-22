@@ -1,12 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,6 +23,8 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
+  const clearError = useCallback(() => setError(''), []);
+
   async function login(email, password) {
     setLoading(true);
     setError('');
@@ -28,7 +34,7 @@ export function AuthProvider({ children }) {
       setUser(res.data.user);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
       return false;
     } finally {
       setLoading(false);
@@ -44,7 +50,7 @@ export function AuthProvider({ children }) {
       setUser(res.data.user);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
       return false;
     } finally {
       setLoading(false);
@@ -53,16 +59,32 @@ export function AuthProvider({ children }) {
 
   function logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, error }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        loading,
+        error,
+        clearError,
+        setUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

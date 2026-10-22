@@ -9,6 +9,8 @@ const ItemSchema = new mongoose.Schema(
       enum: ['produce', 'dairy', 'meat_seafood', 'bakery', 'pantry', 'beverage', 'other'],
       default: 'other',
     },
+    // Legacy support for older items that stored quantity as a plain string (e.g. "2 packs")
+    quantity: { type: String, default: null },
     quantityValue: { type: Number, default: 1, min: 0 },
     quantityUnit: {
       type: String,
@@ -27,5 +29,7 @@ const ItemSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ItemSchema.index({ user: 1, expiryDate: 1 });
 
 module.exports = mongoose.model('Item', ItemSchema);

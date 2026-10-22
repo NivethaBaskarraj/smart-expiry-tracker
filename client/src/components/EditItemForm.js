@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../api/axios';
 import { UNITS } from './AddItemForm';
+import { toDateInputValue } from '../utils/dateUtils';
 
 const CATEGORIES = [
   { value: 'produce', label: 'Fruits & Vegetables' },
@@ -12,16 +13,12 @@ const CATEGORIES = [
   { value: 'other', label: 'Other' },
 ];
 
-// Converts an ISO date string to yyyy-MM-dd for the date input's value
-function toDateInputValue(isoString) {
-  if (!isoString) return '';
-  return new Date(isoString).toISOString().slice(0, 10);
-}
-
 export default function EditItemForm({ item, onItemUpdated, onClose }) {
   const [name, setName] = useState(item.name);
-  const [category, setCategory] = useState(item.category);
-  const [quantityValue, setQuantityValue] = useState(String(item.quantityValue ?? 1));
+  const [category, setCategory] = useState(item.category || 'other');
+  const [quantityValue, setQuantityValue] = useState(
+    item.quantityValue !== undefined && item.quantityValue !== null ? String(item.quantityValue) : '1'
+  );
   const [quantityUnit, setQuantityUnit] = useState(item.quantityUnit || 'unit');
   const [expiryDate, setExpiryDate] = useState(toDateInputValue(item.expiryDate));
   const [submitting, setSubmitting] = useState(false);
@@ -31,16 +28,26 @@ export default function EditItemForm({ item, onItemUpdated, onClose }) {
     e.preventDefault();
     setError('');
 
+    if (!name.trim()) {
+      setError('Item name cannot be empty');
+      return;
+    }
+
     const numericQuantity = Number(quantityValue);
     if (quantityValue === '' || Number.isNaN(numericQuantity) || numericQuantity <= 0) {
       setError('Quantity must be a number greater than 0');
       return;
     }
 
+    if (!expiryDate) {
+      setError('Please select an expiry date');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await api.put(`/items/${item._id}`, {
-        name,
+        name: name.trim(),
         category,
         quantityValue: numericQuantity,
         quantityUnit,
@@ -61,11 +68,22 @@ export default function EditItemForm({ item, onItemUpdated, onClose }) {
         <h2>Edit Grocery Item</h2>
         {error && <div className="error-banner">{error}</div>}
 
-        <label>Item Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Milk" />
+        <label htmlFor="edit-item-name">Item Name</label>
+        <input
+          id="edit-item-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          maxLength={100}
+          placeholder="e.g. Milk"
+        />
 
-        <label>Category</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+        <label htmlFor="edit-item-category">Category</label>
+        <select
+          id="edit-item-category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
           {CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}
@@ -73,18 +91,24 @@ export default function EditItemForm({ item, onItemUpdated, onClose }) {
           ))}
         </select>
 
-        <label>Quantity</label>
+        <label htmlFor="edit-item-quantity">Quantity</label>
         <div className="quantity-row">
           <input
+            id="edit-item-quantity"
             type="number"
             min="0.01"
-            step="0.01"
+            max="100000"
+            step="any"
             value={quantityValue}
             onChange={(e) => setQuantityValue(e.target.value)}
             required
             placeholder="e.g. 1"
           />
-          <select value={quantityUnit} onChange={(e) => setQuantityUnit(e.target.value)}>
+          <select
+            id="edit-item-unit"
+            value={quantityUnit}
+            onChange={(e) => setQuantityUnit(e.target.value)}
+          >
             {UNITS.map((u) => (
               <option key={u.value} value={u.value}>
                 {u.label}
@@ -93,8 +117,9 @@ export default function EditItemForm({ item, onItemUpdated, onClose }) {
           </select>
         </div>
 
-        <label>Expiry Date</label>
+        <label htmlFor="edit-item-expiry">Expiry Date</label>
         <input
+          id="edit-item-expiry"
           type="date"
           value={expiryDate}
           onChange={(e) => setExpiryDate(e.target.value)}

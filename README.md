@@ -1,46 +1,36 @@
 # 🥦 Smart Expiry Tracker
 
-A full-stack web application that helps reduce household food waste by tracking grocery
-expiry dates, suggesting recipes for items that need to be used soon, and giving
-eco-friendly disposal/reuse suggestions for items that have expired.
-
-🔗 Live Demo: smart-expiry-tracker-eta.vercel.app 
-🔧 Backend API: smart-expiry-tracker-ys3t.onrender.com
-
-Note: the backend is hosted on Render's free tier, which spins down after periods of inactivity. The very first request after idle time may take 30-50 seconds to respond while it wakes back up — subsequent requests are fast.
+A modern full-stack web application designed to eliminate household food waste. It tracks grocery expiry dates, provides intelligent recipe suggestions to use ingredients in time, and recommends eco-friendly disposal or repurposing options (compost, fertilizer, skin care) for items that slipped past their date.
 
 ---
 
 ## ✨ Features
 
-- **User authentication** — sign up / log in with JWT-based sessions
-- **Add grocery items** with name, category, quantity, and expiry date
-- **Status-based tracking** — items are visually flagged as OK, expiring soon, expired,
-  or used, and remain in the log until the user deletes them
-- **Recipe suggestions** — pulls real recipes from the Spoonacular API based on an
-  ingredient close to expiry
-- **Disposal / reuse suggestions** — category-aware tips for expired items (composting,
-  plant fertilizer, skin & hair care uses, etc.), with extra item-specific tips for
-  common foods (banana peels, eggshells, coffee grounds, citrus, and more)
-- **Notifications** — browser (desktop) notifications for items expiring soon, plus
-  automated daily email alerts for items expiring soon or already expired
-- **Used / Delete controls** — mark an item as used once consumed, or delete it
-  permanently from the log at any time
+- **Inventory Dashboard**: Live tracking of grocery items with status tags (**Fresh**, **Expiring Soon**, **Expired**, **Used**).
+- **Date & Timezone Resilient**: Strict start-of-day UTC comparisons prevent premature midday expiration and time-zone shifts.
+- **Recipe Suggestions**: Pulls real recipes via the Spoonacular API for ingredients needing quick consumption.
+- **Eco Disposal & Reuse Tips**: Category-based and item-specific suggestions (composting, plant fertilizer, DIY skin/hair care).
+- **Proactive Alerts**:
+  - **Browser Desktop Notifications**: Daily deduplicated popups for items about to expire.
+  - **Provider-Swappable Email Alerts**: Daily email notifications using Brevo HTTP API (Render-friendly), Resend, or standard SMTP.
+  - **Optional SMS Alerts**: Twilio text notifications behind a feature flag (`ENABLE_SMS_ALERTS`).
+- **Account & Security**:
+  - Encrypted passwords with bcrypt and secure 7-day JWT sessions.
+  - Dual password recovery: secure email reset token link **or** secret security question.
+  - Profile preferences: customize notification threshold (1, 2, 3, 5, or 7 days before expiry).
+  - Rate limiting, Helmet security headers, dynamic CORS, and startup validation.
 
 ---
 
 ## 🏗️ Tech Stack
 
-| Layer | Technology |
+| Layer | Technologies |
 |---|---|
-| Frontend | React 18, React Router |
-| Backend | Node.js, Express |
-| Database | MongoDB (Mongoose ODM) |
-| Auth | JSON Web Tokens (JWT), bcrypt for password hashing |
-| Email | Nodemailer (Gmail SMTP) |
-| Scheduled jobs | node-cron |
-| Recipes | Spoonacular Food API |
-| Dev tooling | nodemon, concurrently |
+| **Frontend** | React 18 (Create React App), React Router 6, Axios, Custom CSS with CSS Variables & Tokens |
+| **Backend** | Node.js, Express 4, Mongoose 8, Helmet, Express-Rate-Limit, Node-Cron, Nodemailer |
+| **Database** | MongoDB Atlas (or local MongoDB Community Server) |
+| **Integrations** | Spoonacular Food API, Brevo / Resend / Gmail SMTP, Twilio (optional) |
+| **Testing & Quality** | Jest, Supertest, ESLint (Flat Config), Prettier |
 
 ---
 
@@ -48,139 +38,201 @@ Note: the backend is hosted on Render's free tier, which spins down after period
 
 ```
 smart-expiry-tracker/
-├── package.json          # root — runs client & server together
-├── server/                # Express API
-│   ├── server.js
-│   ├── models/            # User.js, Item.js
-│   ├── routes/             # auth.js, items.js, recipes.js, disposal.js
-│   ├── middleware/         # auth.js (JWT verification)
-│   ├── utils/               # emailService.js, expiryChecker.js, disposalSuggestions.js
-│   └── .env                 # your local secrets (not committed)
-├── client/                 # React app
-│   └── src/
-│       ├── components/     # Login, Register, Home, ItemCard, AddItemForm, etc.
-│       ├── context/          # AuthContext.js
-│       └── api/                # axios instance
-└── README.md
+├── package.json               # Root scripts (install:all, dev, test, lint, build)
+├── requirements.txt           # Project overview & system prerequisites
+├── README.md                  # Comprehensive setup & operational guide
+├── server/                    # Node.js + Express REST API
+│   ├── server.js              # Express app entry, security headers, CORS, startup checks
+│   ├── eslint.config.js       # ESLint flat configuration
+│   ├── .prettierrc            # Prettier code formatting rules
+│   ├── .env.example           # Server environment variables reference
+│   ├── models/                # Mongoose models (User.js, Item.js)
+│   ├── routes/                # API routes (auth, items, recipes, disposal, cron)
+│   ├── middleware/            # Auth JWT verification & rate limiting
+│   ├── utils/                 # dateUtils, emailService, smsService, expiryChecker, disposalSuggestions
+│   └── tests/                 # Jest + Supertest suites (date calculations & route integration)
+└── client/                    # React frontend application
+    ├── package.json
+    ├── .env.example           # Frontend environment variables reference
+    ├── public/                # HTML template, viewport meta, favicon
+    └── src/
+        ├── App.js             # Client routing & authentication wrappers
+        ├── api/axios.js       # Axios instance with 401 token auto-logout interceptor
+        ├── context/           # AuthContext.js, ToastContext.js
+        ├── components/        # Home, ItemCard, Profile, AddItemForm, EditItemForm, Modals, etc.
+        ├── utils/dateUtils.js # Timezone-safe formatting and date mapping
+        └── styles/index.css   # Clean CSS design system using CSS custom properties
 ```
 
 ---
 
-## ⚙️ Prerequisites
+## 🚀 Local Development Setup (Windows PowerShell)
 
-- [Node.js](https://nodejs.org) v18 or later
-- A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account (free tier) *or* a local MongoDB install
-- A free [Spoonacular API](https://spoonacular.com/food-api) key
-- A Gmail account with an [App Password](https://myaccount.google.com/apppasswords) for sending email alerts
+### 1. Prerequisites
 
----
+- **Node.js** v18+ installed (`node -v` in PowerShell).
+- A free **MongoDB Atlas** connection string (or a local MongoDB instance).
+- A free **Spoonacular API key** from [spoonacular.com/food-api](https://spoonacular.com/food-api).
 
-## 🚀 Setup
+### 2. Install Dependencies
 
-### 1. Install dependencies (all three package.json files)
+From the project root:
 
-```bash
+```powershell
 npm run install:all
 ```
 
-### 2. Configure environment variables
+*(This installs root, server, and client dependencies automatically).*
 
-Copy the example env file and fill in your own values:
+### 3. Configure Environment Variables
 
-```bash
+Create `server/.env` by copying `server/.env.example`:
+
+```powershell
 cd server
-copy .env.example .env      # Windows
-# or: cp .env.example .env   # macOS/Linux
+Copy-Item .env.example .env
 ```
 
-Fill in `server/.env`:
+Open `server/.env` in VS Code and fill in your values:
 
-```
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=any_long_random_string
+```ini
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/smart-expiry-tracker
+JWT_SECRET=replace_with_a_long_random_secret_string_min_16_chars
 PORT=5000
-SPOONACULAR_API_KEY=your_spoonacular_api_key
-EMAIL_USER=your_gmail_address
-EMAIL_PASS=your_gmail_app_password
 CLIENT_URL=http://localhost:3000
+SPOONACULAR_API_KEY=your_spoonacular_key_here
+CRON_SECRET=my_custom_secret_token_123
+
+# Email Provider: brevo | resend | smtp
+EMAIL_PROVIDER=brevo
+BREVO_API_KEY=your_brevo_api_key_here
+BREVO_SENDER_EMAIL=your_verified_sender@example.com
 ```
 
-Also set up the client env (usually no changes needed):
+Create `client/.env` by copying `client/.env.example`:
 
-```bash
+```powershell
 cd ../client
-copy .env.example .env      # Windows
-# or: cp .env.example .env
+Copy-Item .env.example .env
 ```
 
-### 3. Run the app
+The default `REACT_APP_API_URL=http://localhost:5000/api` is already configured for local development.
 
-From the **project root** (one level above `server` and `client`):
+### 4. Run Locally
 
-```bash
+From the project root:
+
+```powershell
 npm run dev
 ```
 
-This starts both the backend (`http://localhost:5000`) and frontend
-(`http://localhost:3000`) together in one terminal.
-
-> Prefer running them separately? `npm run server` and `npm run client` (in two terminals)
-> also work.
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Backend API**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
 ---
 
 ## 🔑 Environment Variable Reference
 
-| Variable | Where to get it |
-|---|---|
-| `MONGO_URI` | MongoDB Atlas → Connect → Drivers → Node.js connection string |
-| `JWT_SECRET` | Any random string — generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `SPOONACULAR_API_KEY` | spoonacular.com/food-api → sign up → Profile & API Key |
-| `EMAIL_USER` / `EMAIL_PASS` | Your Gmail address + an App Password from myaccount.google.com/apppasswords |
-| `CLIENT_URL` | The URL your React app runs on (default `http://localhost:3000`) |
+### Server (`server/.env` and Render dashboard)
+
+| Variable | Required? | Default | Description |
+|---|---|---|---|
+| `MONGO_URI` | **Yes** | — | MongoDB Atlas connection string |
+| `JWT_SECRET` | **Yes** | — | Secret string for signing auth tokens (min 16 chars) |
+| `PORT` | No | `5000` | Port for Express server |
+| `CLIENT_URL` | **Yes** | `http://localhost:3000` | Allowed CORS origins. Comma-separated for multiple (e.g. `https://my-app.vercel.app,http://localhost:3000`) |
+| `SPOONACULAR_API_KEY` | Recommended | — | Spoonacular API key for recipe suggestions |
+| `CRON_SECRET` | Recommended | — | Secret token required to trigger `/api/cron/check-expiry` remotely |
+| `EMAIL_PROVIDER` | No | Auto-detect | Email service: `brevo`, `resend`, or `smtp` |
+| `BREVO_API_KEY` | If Brevo | — | Brevo API key (Settings → SMTP & API) |
+| `BREVO_SENDER_EMAIL` | If Brevo | — | Verified sender email in Brevo account |
+| `RESEND_API_KEY` | If Resend | — | Resend API key |
+| `RESEND_SENDER_EMAIL` | If Resend | — | Verified sender email or `onboarding@resend.dev` |
+| `EMAIL_USER` / `EMAIL_PASS` | If SMTP | — | Gmail address and 16-character App Password |
+| `ENABLE_SMS_ALERTS` | No | `false` | Set to `true` to enable Twilio SMS text alerts |
+| `TWILIO_ACCOUNT_SID` | If SMS | — | Twilio Account SID |
+| `TWILIO_AUTH_TOKEN` | If SMS | — | Twilio Auth Token |
+| `TWILIO_PHONE_NUMBER` | If SMS | — | Twilio Phone Number in E.164 format (e.g. `+1234567890`) |
+
+### Client (`client/.env` and Vercel dashboard)
+
+| Variable | Required? | Default | Description |
+|---|---|---|---|
+| `REACT_APP_API_URL` | **Yes** | `http://localhost:5000/api` | Full backend API URL (e.g. `https://my-backend.onrender.com/api`) |
 
 ---
 
-## 🧪 How Notifications Work
+## ⏰ Render Free Tier & Daily Expiry Notifications
 
-- A daily cron job (`server/utils/expiryChecker.js`) runs once at 8:00 AM and also once
-  on server startup:
-  - Items expiring within 2 days → email alert sent, flagged so it isn't re-sent
-  - Items past their expiry date → email alert sent, item status flips to `expired`
-- The React app requests browser notification permission on load and shows a native
-  desktop pop-up for items expiring soon (deduplicated per day via `localStorage`)
+Render's free tier spins down web services after 15 minutes of inactivity. When asleep, internal Node cron timers stop.
+
+To guarantee that your expiry checks run every day on schedule, this project provides a protected remote trigger endpoint:
+
+**Endpoint**: `GET /api/cron/check-expiry?secret=YOUR_CRON_SECRET`  
+(Also supports `POST` with `x-cron-secret: YOUR_CRON_SECRET` header).
+
+### How to set up free external scheduling:
+1. Sign up for a free account at [cron-job.org](https://cron-job.org).
+2. Create a new cron job.
+3. Set the URL to:
+   ```
+   https://YOUR-BACKEND.onrender.com/api/cron/check-expiry?secret=YOUR_CRON_SECRET
+   ```
+4. Set schedule to run once daily (e.g. every day at 8:00 AM UTC).
+5. When called, it wakes your Render service, checks expiring and expired items, sends email alerts, and returns JSON confirmation:
+   ```json
+   {
+     "success": true,
+     "expiringSoonProcessed": 2,
+     "expiredProcessed": 1,
+     "timestamp": "2026-10-22T08:00:00.000Z"
+   }
+   ```
+
+---
+
+## 🧪 Testing & Code Quality
+
+Run tests from the root or server:
+
+```powershell
+# Run backend test suite (Jest + Supertest)
+npm test
+
+# Run ESLint check
+npm run lint
+
+# Build client production bundle
+npm run build
+```
+
+---
+
+## 🌐 Production Deployment
+
+### 1. Backend (Render)
+- **Root Directory**: `server`
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- Add all required environment variables in the Render Dashboard (**Environment** tab).
+- Note: Keep `CLIENT_URL` pointing to your Vercel URL (e.g. `https://smart-expiry-tracker-eta.vercel.app,http://localhost:3000`).
+
+### 2. Frontend (Vercel)
+- **Root Directory**: `client`
+- **Framework Preset**: Create React App
+- **Build Command**: `npm run build`
+- **Output Directory**: `build`
+- In **Environment Variables**, add:
+  `REACT_APP_API_URL=https://YOUR-RENDER-BACKEND.onrender.com/api`
 
 ---
 
 ## 🛠️ Troubleshooting
 
-| Problem | Fix |
-|---|---|
-| `MongoDB connection error` | Check `MONGO_URI`; make sure your IP is allowed in Atlas → Network Access → IP Access List |
-| Recipes return a 500 error | Check `SPOONACULAR_API_KEY` and your daily quota (150 requests/day on the free tier) |
-| No emails arriving | Confirm `EMAIL_PASS` is a Gmail **App Password** (no spaces), not your normal password; check spam |
-| `npm install` fails with a PowerShell script error (Windows) | Run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` once, confirm with `Y` |
-| `package.json` fails with `EJSONPARSE` | The file was saved with the wrong text encoding — recreate it directly inside VS Code (not via a browser download) |
-
----
-
-## 🔑 Environment Variable Reference
-Variable	Where to get it
-MONGO_URI	MongoDB Atlas → Connect → Drivers → Node.js connection string
-JWT_SECRET	Any random string — generate one with node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-SPOONACULAR_API_KEY	spoonacular.com/food-api → sign up → Profile & API Key
-EMAIL_USER / EMAIL_PASS	Your Gmail address + an App Password from myaccount.google.com/apppasswords
-CLIENT_URL	The URL your React app runs on (default http://localhost:3000)
-
-## 🔭 Possible Future Additions
-
-- SMS alerts via Twilio
-- Barcode scanning for faster item entry
-- A "shopping list" that learns what you tend to run out of
-- Production deployment (Render/Railway for the API, Vercel/Netlify for the frontend)
-
----
-
-## 📄 License
-
-This project was built for educational purposes.
+| Problem | Cause | Solution |
+|---|---|---|
+| `Startup Error: Missing required environment variable(s)` | `MONGO_URI` or `JWT_SECRET` is unset | Ensure `server/.env` contains valid values |
+| `CORS blocked request from origin: ...` | Frontend domain not in `CLIENT_URL` | Add your Vercel URL to `CLIENT_URL` in `server/.env` (comma-separated) |
+| Recipe search returns 503 | `SPOONACULAR_API_KEY` missing or default | Add a valid key from spoonacular.com/food-api to `server/.env` |
+| Emails failing on Render | Gmail SMTP port 587 is blocked by Render free tier | Use `EMAIL_PROVIDER=brevo` with a free Brevo API key and verified sender |
+| 401 on every request | Token expired (after 7 days) | Log in again; the app will auto-redirect to `/login` |

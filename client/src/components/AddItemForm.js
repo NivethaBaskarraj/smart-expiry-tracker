@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import api from '../api/axios';
+import { getTodayDateInputValue } from '../utils/dateUtils';
+import { useToast } from '../context/ToastContext';
 
 const CATEGORIES = [
   { value: 'produce', label: 'Fruits & Vegetables' },
@@ -20,11 +22,12 @@ export const UNITS = [
 ];
 
 export default function AddItemForm({ onItemAdded, onClose }) {
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('produce');
   const [quantityValue, setQuantityValue] = useState('1');
   const [quantityUnit, setQuantityUnit] = useState('unit');
-  const [expiryDate, setExpiryDate] = useState('');
+  const [expiryDate, setExpiryDate] = useState(getTodayDateInputValue());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,45 +35,72 @@ export default function AddItemForm({ onItemAdded, onClose }) {
     e.preventDefault();
     setError('');
 
+    if (!name.trim()) {
+      setError('Item name cannot be empty');
+      return;
+    }
+
     const numericQuantity = Number(quantityValue);
     if (quantityValue === '' || Number.isNaN(numericQuantity) || numericQuantity <= 0) {
       setError('Quantity must be a number greater than 0');
       return;
     }
 
+    if (!expiryDate) {
+      setError('Please select an expiry date');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await api.post('/items', {
-        name,
+        name: name.trim(),
         category,
         quantityValue: numericQuantity,
         quantityUnit,
         expiryDate,
       });
+      showToast({ message: `Added "${res.data.name}" to inventory!`, type: 'success' });
       onItemAdded(res.data);
-      setName('');
-      setQuantityValue('1');
-      setQuantityUnit('unit');
-      setExpiryDate('');
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not add item');
+      const msg = err.response?.data?.message || 'Could not add item';
+      setError(msg);
+      showToast({ message: msg, type: 'error' });
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <form className="modal-card" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
-        <h2>Add Grocery Item</h2>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <form
+        className="modal-card"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-item-title"
+      >
+        <h2 id="add-item-title">Add Grocery Item</h2>
         {error && <div className="error-banner">{error}</div>}
 
-        <label>Item Name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Milk" />
+        <label htmlFor="add-item-name">Item Name</label>
+        <input
+          id="add-item-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          maxLength={100}
+          placeholder="e.g. Fresh Milk"
+        />
 
-        <label>Category</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+        <label htmlFor="add-item-category">Category</label>
+        <select
+          id="add-item-category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
           {CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}
@@ -78,18 +108,25 @@ export default function AddItemForm({ onItemAdded, onClose }) {
           ))}
         </select>
 
-        <label>Quantity</label>
+        <label htmlFor="add-item-quantity">Quantity</label>
         <div className="quantity-row">
           <input
+            id="add-item-quantity"
             type="number"
             min="0.01"
-            step="0.01"
+            max="100000"
+            step="any"
             value={quantityValue}
             onChange={(e) => setQuantityValue(e.target.value)}
             required
             placeholder="e.g. 1"
           />
-          <select value={quantityUnit} onChange={(e) => setQuantityUnit(e.target.value)}>
+          <select
+            id="add-item-unit"
+            value={quantityUnit}
+            onChange={(e) => setQuantityUnit(e.target.value)}
+            aria-label="Quantity unit"
+          >
             {UNITS.map((u) => (
               <option key={u.value} value={u.value}>
                 {u.label}
@@ -98,8 +135,9 @@ export default function AddItemForm({ onItemAdded, onClose }) {
           </select>
         </div>
 
-        <label>Expiry Date</label>
+        <label htmlFor="add-item-expiry">Expiry Date</label>
         <input
+          id="add-item-expiry"
           type="date"
           value={expiryDate}
           onChange={(e) => setExpiryDate(e.target.value)}
